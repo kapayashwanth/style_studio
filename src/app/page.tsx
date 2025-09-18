@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateTryOnImage } from "@/ai/flows/generate-try-on-image";
 import { suggestMatchingOutfits } from "@/ai/flows/suggest-matching-outfits";
 import { Header } from "@/components/header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type PhotoState = {
   file: File | null;
@@ -21,6 +22,7 @@ export default function StyleStudioPage() {
   const [clothingPhoto, setClothingPhoto] = useState<PhotoState>({ file: null, dataUri: null });
   const [generatedPhoto, setGeneratedPhoto] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const [isLoadingTryOn, setIsLoadingTryOn] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -51,11 +53,15 @@ export default function StyleStudioPage() {
         setClothingPhoto({ file, dataUri });
         setSuggestions([]);
         setIsLoadingSuggestions(true);
+        setApiError(null);
         try {
           const result = await suggestMatchingOutfits({ clothingDataUri: dataUri });
           setSuggestions(result.suggestions);
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error getting style suggestions:", error);
+          if (error.message?.includes('429')) {
+            setApiError("You've exceeded the API quota. Please set up a Firebase project to use your own API key.");
+          }
           toast({ variant: "destructive", title: "Style Suggestion Failed", description: "Could not get style suggestions. Please try another image." });
         } finally {
           setIsLoadingSuggestions(false);
@@ -75,14 +81,18 @@ export default function StyleStudioPage() {
 
     setIsLoadingTryOn(true);
     setGeneratedPhoto(null);
+    setApiError(null);
     try {
       const result = await generateTryOnImage({
         userPhotoDataUri: userPhoto.dataUri,
         clothingImageDataUri: clothingPhoto.dataUri,
       });
       setGeneratedPhoto(result.tryOnImageDataUri);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating try-on image:", error);
+      if (error.message?.includes('429')) {
+        setApiError("You've exceeded the API quota. Please set up a Firebase project to use your own API key.");
+      }
       toast({ variant: "destructive", title: "Generation Failed", description: "Could not generate the try-on image. Please try again." });
     } finally {
       setIsLoadingTryOn(false);
@@ -112,6 +122,12 @@ export default function StyleStudioPage() {
     if(type === 'all') {
       setGeneratedPhoto(null);
     }
+    setApiError(null);
+  };
+  
+  const handleGetFirebaseProject = () => {
+    // This will be handled by the tool
+    console.log("Requesting Firebase project...");
   };
 
   const UploadBox = ({
@@ -153,6 +169,15 @@ export default function StyleStudioPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-8">
+        {apiError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>API Quota Exceeded</AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                {apiError}
+                <Button onClick={handleGetFirebaseProject}>Get Firebase Project</Button>
+              </AlertDescription>
+            </Alert>
+          )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <Card className="w-full">
             <CardHeader>
