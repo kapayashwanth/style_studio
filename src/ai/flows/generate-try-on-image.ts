@@ -35,29 +35,6 @@ export async function generateTryOnImage(input: GenerateTryOnImageInput): Promis
   return generateTryOnImageFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateTryOnImagePrompt',
-  input: {schema: GenerateTryOnImageInputSchema},
-  output: {schema: GenerateTryOnImageOutputSchema},
-  prompt: [
-    {
-      media: {url: '{{{userPhotoDataUri}}}'},
-    },
-    {
-      text: 'Overlay the clothing in this image: ',
-    },
-    {
-      media: {url: '{{{clothingImageDataUri}}}'},
-    },
-    {
-      text: 'onto the user in the first image, generating a realistic try-on image.',
-    },
-  ],
-  config: {
-    responseModalities: ['IMAGE', 'TEXT'],
-  },
-});
-
 const generateTryOnImageFlow = ai.defineFlow(
   {
     name: 'generateTryOnImageFlow',
