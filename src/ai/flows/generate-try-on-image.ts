@@ -46,9 +46,9 @@ const generateTryOnImageFlow = ai.defineFlow(
       model: 'googleai/gemini-2.5-flash-image-preview',
       prompt: [
         {media: {url: input.userPhotoDataUri}},
-        {text: 'Overlay the clothing in this image: '},
+        {text: 'Given this image of a user and an image of a clothing item:'},
         {media: {url: input.clothingImageDataUri}},
-        {text: 'onto the user in the first image, generating a realistic try-on image.'},
+        {text: 'Generate a new image of the person from the first image wearing the clothing item from the second image. The new image should be a realistic virtual try-on.'},
       ],
       config: {
         responseModalities: ['IMAGE', 'TEXT'],
